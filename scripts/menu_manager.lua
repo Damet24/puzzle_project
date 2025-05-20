@@ -3,21 +3,22 @@ local color_utils = require 'scripts.utils.color'
 local MenuManager = {}
 MenuManager.__index = MenuManager
 
-function MenuManager.new(menus)
+function MenuManager.new(menus, default_menu)
     local instance = setmetatable({}, MenuManager)
 
     instance.cursor = love.graphics.newImage('assets/cursor.png')
     instance.cursor_w = instance.cursor:getWidth()
     instance.cursor_h = instance.cursor:getHeight()
 
-    instance.disable_goto = false
+    instance.navidation = true
     instance.font = love.graphics.newFont('assets/fonts/main.ttf', 24)
     instance.menus = menus
+    instance.in_menory_menu = nil
 
     instance.cursor_pos = 1
     instance.menu_history = {}
-    instance.current_menu = 'main_menu'
-    instance.current_menu_size = #instance.menus[instance.current_menu]
+    instance.current_menu = default_menu or 'main_menu'
+    instance.current_menu_size = #instance.menus[instance.current_menu].items
 
     instance.option = {
         menu_position_x = love.graphics.getWidth() / 2,
@@ -32,46 +33,42 @@ function MenuManager.new(menus)
 end
 
 function MenuManager:back_on_menu()
-    if self.disable_goto then
-        self.current_menu = self.menu_history[#self.menu_history]
-        table.remove(self.menu_history, #self.menu_history)
-        self.current_menu_size = #self.menus[self.current_menu]
-        self.cursor_pos = 1
-    end
+    if not self.navidation then return end
+    self.current_menu = self.menu_history[#self.menu_history]
+    table.remove(self.menu_history, #self.menu_history)
+    self.current_menu_size = #self.menus[self.current_menu].items
+    self.cursor_pos = 1
 end
 
-function MenuManager:setLimits(x, y, w, h)
+function MenuManager:set_limits(x, y, w, h)
     self.limits = {
         x = x, y = y, w = w, h = h
     }
 end
 
-function MenuManager:go_to_menu(new_menu)
-    if self.disable_goto then
-        self.menu_history[#self.menu_history + 1] = self.current_menu
-        self.current_menu = new_menu
-        self.cursor_pos = 1
-        self.current_menu_size = #self.menus[self.current_menu]
-    end
+function MenuManager:remove_limits()
+    self.limits = nil
 end
 
-function MenuManager:getFullLabel(i)
-    local label = self.menus[self.current_menu][i].label
-    local value = ''
+function MenuManager:go_to_menu(new_menu)
+    if not self.navidation then return end
+    self.menu_history[#self.menu_history + 1] = self.current_menu
+    self.current_menu = new_menu
+    self.cursor_pos = 1
+    self.current_menu_size = #self.menus[self.current_menu].items
+end
 
-    if self.menus[self.current_menu][i].value ~= nil then
-        if self.menus[self.current_menu][i].value and type(self.menus[self.current_menu][i].value) ~= 'boolean' then
-            value = self.menus[self.current_menu][i].value
+function MenuManager:get_value(value)
+    local _value = ''
+    if value ~= nil then
+        if value and type(value) ~= 'boolean' then
+            _value = value
         else
-            if self.menus[self.current_menu][i].value then
-                value = 'on'
-            else
-                value = 'off'
-            end
+            if value then _value = 'on' else _value = 'off' end
         end
     end
 
-    return label .. '\t\t' .. value
+    return _value
 end
 
 function MenuManager:draw_cursor()
@@ -80,6 +77,24 @@ function MenuManager:draw_cursor()
         (self.option.item_gap * (self.cursor_pos - 1))
 
     love.graphics.draw(self.cursor, pos_x, pos_y)
+end
+
+function MenuManager:draw_window(x, y, w, h)
+    love.graphics.rectangle('fill', x - 4, y - 4, w + 8, h + 8)
+    love.graphics.setColor(0, 0, 0)
+    love.graphics.rectangle('fill', x, y, w, h)
+    love.graphics.setColor(1, 1, 1)
+end
+
+function MenuManager:draw_background(draw)
+    draw = draw or false
+    if draw then
+        local dw = love.graphics.getWidth()
+        local dh = love.graphics.getHeight()
+        love.graphics.setColor(0, 0, 0, .4)
+        love.graphics.rectangle('fill', 0, 0, dw, dh)
+        love.graphics.setColor(1, 1, 1)
+    end
 end
 
 function MenuManager:centerText(text, align_x, align_y)
@@ -142,8 +157,10 @@ function MenuManager:centerText(text, align_x, align_y)
     return final_x, final_y
 end
 
-function MenuManager:draw_current_menu()
+function MenuManager:draw_current_menu(draw_bg)
+    self:draw_background(draw_bg)
     if self.limits ~= nil then
+        self:draw_window(self.limits.x, self.limits.y, self.limits.w, self.limits.h)
         love.graphics.rectangle('line', self.limits.x, self.limits.y, self.limits.w, self.limits.h)
 
         love.graphics.line(
@@ -161,30 +178,72 @@ function MenuManager:draw_current_menu()
     end
 
     love.graphics.setFont(self.font)
-    self.disable_goto = true
-    -- self:draw_cursor()
-    for i, v in pairs(self.menus[self.current_menu]) do
+    for i, v in pairs(self.menus[self.current_menu].items) do
         if i == self.cursor_pos then
             love.graphics.setColor(color_utils.toRGB(252, 207, 3))
         end
-        local x, y = self:centerText(self.menus[self.current_menu][i].label)
-        local text = self:getFullLabel(i)
-        love.graphics.print(text, x,
-            y + (self.option.item_gap * (i - 1)))
+
+        local menu = self.menus[self.current_menu].items
+
+        local label = menu[i].label
+        local value = self:get_value(menu[i].value)
+        local lx, ly = self:centerText(label, menu[i].align_label, self.menus[self.current_menu].align_y)
+        local vx, vy = self:centerText(value, menu[i].align_value, self.menus[self.current_menu].align_y)
+
+
+        love.graphics.print(label, lx,
+            ly + (self.option.item_gap * (i - 1)))
+
+        love.graphics.print(value, vx,
+            vy + (self.option.item_gap * (i - 1)))
+
+
         love.graphics.setColor(1, 1, 1)
     end
 end
 
-function MenuManager:draw_menu(menu)
+function MenuManager:draw_menu(menu, draw_bg)
+    self:draw_background(draw_bg)
+    self.in_menory_menu = menu
+    self.navidation = false
+    self.current_menu_size = #menu.items
+    if self.limits ~= nil then
+        self:draw_window(self.limits.x, self.limits.y, self.limits.w, self.limits.h)
+        love.graphics.rectangle('line', self.limits.x, self.limits.y, self.limits.w, self.limits.h)
+
+        love.graphics.line(
+            self.limits.x,
+            self.limits.y + self.limits.h / 2,
+            self.limits.w + self.limits.x,
+            self.limits.y + self.limits.h / 2
+        )
+        love.graphics.line(
+            self.limits.x + self.limits.w / 2,
+            self.limits.y,
+            self.limits.x + self.limits.w / 2,
+            self.limits.y + self.limits.h
+        )
+    end
+
     love.graphics.setFont(self.font)
-    for i, v in pairs(self.menus[menu]) do
+    for i, v in pairs(menu.items) do
         if i == self.cursor_pos then
             love.graphics.setColor(color_utils.toRGB(252, 207, 3))
         end
-        local x, y = self:centerText(self.menus[menu][i].label)
-        local text = self:getFullLabel(i)
-        love.graphics.print(text, x,
-            y + (self.option.item_gap * (i - 1)))
+
+        local label = menu.items[i].label
+        local value = self:get_value(menu.items[i].value)
+        local lx, ly = self:centerText(label, menu.items[i].align_label, menu.align_y)
+        local vx, vy = self:centerText(value, menu.items[i].align_value, menu.align_y)
+
+
+        love.graphics.print(label, lx,
+            ly + (self.option.item_gap * (i - 1)))
+
+        love.graphics.print(value, vx,
+            vy + (self.option.item_gap * (i - 1)))
+
+
         love.graphics.setColor(1, 1, 1)
     end
 end
@@ -210,26 +269,44 @@ function MenuManager:down()
 end
 
 function MenuManager:action()
-    local action = self.menus[self.current_menu][self.cursor_pos].action
+    local action = nil
+    if self.in_menory_menu ~= nil then
+        action = self.in_menory_menu.items[self.cursor_pos].action
+    else
+        action = self.menus[self.current_menu].items[self.cursor_pos].action
+    end
     if action then
         action(self)
     end
 end
 
 function MenuManager:mod(type)
-    local mod = self.menus[self.current_menu][self.cursor_pos].mod
+    local mod = nil
+    if self.in_menory_menu ~= nil then
+        mod = self.in_menory_menu.items[self.cursor_pos].mod
+    else
+        mod = self.menus[self.current_menu].items[self.cursor_pos].mod
+    end
     if mod then
         mod(self, type)
     end
 end
 
 function MenuManager:setValue(value)
-    if value then
-        local _value = self.menus[self.current_menu][self.cursor_pos].value
-        self.menus[self.current_menu][self.cursor_pos].value = _value + value
+    if self.in_menory_menu ~= nil then
+        local _value = self.in_menory_menu.items[self.cursor_pos].value
+        if value then
+            self.in_menory_menu.items[self.cursor_pos].value = _value + value
+        else
+            self.in_menory_menu.items[self.cursor_pos].value = not _value
+        end
     else
-        local _value = self.menus[self.current_menu][self.cursor_pos].value
-        self.menus[self.current_menu][self.cursor_pos].value = not _value
+        local _value = self.menus[self.current_menu].items[self.cursor_pos].value
+        if value then
+            self.menus[self.current_menu].items[self.cursor_pos].value = _value + value
+        else
+            self.menus[self.current_menu].items[self.cursor_pos].value = not _value
+        end
     end
 end
 

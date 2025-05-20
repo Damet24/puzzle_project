@@ -4,6 +4,10 @@ local CollisionGameObject = require 'scripts.collision_game_object'
 local Player = require 'scripts.player'
 local input = require 'libs.input.input'
 local color_utils = require 'scripts.utils.color'
+local C = require 'scripts.constants'
+local MenuManager = require 'scripts.menu_manager'
+
+local menus = require 'scripts.menus'
 
 local GameControl = {}
 GameControl.__index = GameControl
@@ -45,6 +49,9 @@ GameControl.new = function()
 
     instance.objects.player = Player.new(0, 0, instance.world)
 
+    instance.menu_manager = MenuManager.new(menus, 'main_menu')
+    instance.show_menu = false
+
     return instance
 end
 
@@ -73,17 +80,25 @@ function GameControl:update(delta_time)
     end
 
     if self.input.pressed('escape') then
-        love.event.quit()
+        self.show_menu = not self.show_menu
     end
+
+    if self.show_menu then
+        self:control_menu()
+    end
+end
+
+function GameControl:control_menu()
+    
 end
 
 function GameControl:draw()
     self.camera:attach()
-    -- self.map_manager:draw()
+    self.map_manager:draw()
 
-    -- for i, obj in pairs(self.objects) do
-    --     obj:draw()
-    -- end
+    for i, obj in pairs(self.objects) do
+        obj:draw()
+    end
 
     if self.debug then
         if debug and self.world then
@@ -104,6 +119,11 @@ function GameControl:draw()
         end
     end
     self.camera:detach()
+    love.graphics.setBackgroundColor(color_utils.toRGB(37, 18, 26))
+    
+    if self.show_menu then
+        self.menu_manager:draw_current_menu()
+    end
 end
 
 return GameControl

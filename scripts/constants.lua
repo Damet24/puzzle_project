@@ -7,5 +7,8 @@ return {
     game_states = {
         pause = 1,
         in_game = 2,
+    },
+    camera = {
+        zoom = 4
     }
 }
