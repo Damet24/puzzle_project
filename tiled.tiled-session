@@ -1,0 +1,47 @@
+{
+    "Map/SizeTest": {
+        "height": 4300,
+        "width": 2
+    },
+    "activeFile": "assets/maps/tiled/map_01.tmx",
+    "expandedProjectPaths": [
+        "assets/maps",
+        "assets",
+        "assets/maps/tiled",
+        "libs/hump/docs/_static",
+        "."
+    ],
+    "fileStates": {
+        "assets/maps/tiled/map_01.tmx": {
+            "scale": 1.05925,
+            "selectedLayer": 0,
+            "viewCenter": {
+                "x": 399.81118716072694,
+                "y": 400.2832192589096
+            }
+        },
+        "assets/maps/tiled/map_01.tmx#world": {
+            "scaleInDock": 1
+        }
+    },
+    "last.exportedFilePath": "C:/Users/josep/develop/learning_lua/puzzle_project/assets/maps",
+    "last.imagePath": "C:/Users/josep/develop/learning_lua/puzzle_project/assets/maps",
+    "map.height": 50,
+    "map.lastUsedExportFilter": "All Files (*)",
+    "map.lastUsedFormat": "tmx",
+    "map.tileHeight": 16,
+    "map.tileWidth": 16,
+    "map.width": 50,
+    "openFiles": [
+        "assets/maps/tiled/map_01.tmx"
+    ],
+    "project": "tiled.tiled-project",
+    "recentFiles": [
+        "assets/maps/tiled/map_01.tmx"
+    ],
+    "tileset.embedInMap": true,
+    "tileset.tileSize": {
+        "height": 16,
+        "width": 16
+    }
+}
