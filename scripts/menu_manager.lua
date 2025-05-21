@@ -1,4 +1,4 @@
-local color_utils = require 'scripts.utils.color'
+local C = require 'scripts.constants'
 
 local MenuManager = {}
 MenuManager.__index = MenuManager
@@ -27,9 +27,27 @@ function MenuManager.new(menus, default_menu)
         item_margin = 8
     }
 
+    instance.menu_percentage = nil
     instance.limits = nil
+    instance.compute_limits_function = nil
+    instance.display_w = love.graphics.getWidth()
+    instance.display_h = love.graphics.getHeight()
 
     return instance
+end
+
+function MenuManager:update()
+    self.display_w = love.graphics.getWidth()
+    self.display_h = love.graphics.getHeight()
+    self:compute_limits()
+    -- if self.menu_percentage ~= nil then
+    --     self:set_limit_percentage(
+    --         self.menu_percentage.per_x,
+    --         self.menu_percentage.per_y,
+    --         self.menu_percentage.per_x2,
+    --         self.menu_percentage.per_y2
+    --     )
+    -- end
 end
 
 function MenuManager:back_on_menu()
@@ -46,8 +64,23 @@ function MenuManager:set_limits(x, y, w, h)
     }
 end
 
+function MenuManager:compute_limits()
+    if self.compute_limits_function ~= nil then
+        local x, y, w, h = self.compute_limits_function()
+        self.limits = {
+            x = x, y = y, w = w, h = h
+        }
+    end
+end
+
+function MenuManager:set_computed_limits(func)
+    self.compute_limits_function = func
+end
+
 function MenuManager:remove_limits()
     self.limits = nil
+    self.menu_percentage = nil
+    self.compute_limits_function = nil
 end
 
 function MenuManager:go_to_menu(new_menu)
@@ -58,7 +91,7 @@ function MenuManager:go_to_menu(new_menu)
     self.current_menu_size = #self.menus[self.current_menu].items
 end
 
-function MenuManager:get_value(value)
+function MenuManager:get_item_value(value)
     local _value = ''
     if value ~= nil then
         if value and type(value) ~= 'boolean' then
@@ -89,15 +122,13 @@ end
 function MenuManager:draw_background(draw)
     draw = draw or false
     if draw then
-        local dw = love.graphics.getWidth()
-        local dh = love.graphics.getHeight()
         love.graphics.setColor(0, 0, 0, .4)
-        love.graphics.rectangle('fill', 0, 0, dw, dh)
+        love.graphics.rectangle('fill', 0, 0, self.display_w, self.display_h)
         love.graphics.setColor(1, 1, 1)
     end
 end
 
-function MenuManager:centerText(text, align_x, align_y)
+function MenuManager:center_text(text, align_x, align_y)
     local final_x = 0
     local final_y = 0
     local w = self.font:getWidth(text)
@@ -129,27 +160,24 @@ function MenuManager:centerText(text, align_x, align_y)
             final_y = self.limits.y + dh - (self.current_menu_size * self.option.item_gap)
         end
     else
-        local dw = love.graphics.getWidth()
-        local dh = love.graphics.getHeight()
-
         if align_x == 'center_left' then
-            final_x = (dw / 2) + self.option.item_margin
+            final_x = (self.display_w / 2) + self.option.item_margin
         elseif align_x == 'center_right' then
-            final_x = ((dw / 2) - w) - self.option.item_margin
+            final_x = ((self.display_w / 2) - w) - self.option.item_margin
         elseif align_x == 'center' then
-            final_x = ((dw / 2) - (w / 2))
+            final_x = ((self.display_w / 2) - (w / 2))
         elseif align_x == 'left' then
             final_x = self.option.item_margin
         elseif align_x == 'right' then
-            final_x = dw - (w + self.option.item_margin)
+            final_x = self.display_w - (w + self.option.item_margin)
         end
 
         if align_y == 'top' then
             final_y = self.option.item_margin
         elseif align_y == 'center' then
-            final_y = (dh / 2) - (self.current_menu_size * self.option.item_gap) / 2
+            final_y = (self.display_h / 2) - (self.current_menu_size * self.option.item_gap) / 2
         elseif align_y == 'bottom' then
-            final_y = dh - (self.current_menu_size * self.option.item_gap)
+            final_y = self.display_h - (self.current_menu_size * self.option.item_gap)
         end
     end
 
@@ -161,42 +189,26 @@ function MenuManager:draw_current_menu(draw_bg)
     self:draw_background(draw_bg)
     if self.limits ~= nil then
         self:draw_window(self.limits.x, self.limits.y, self.limits.w, self.limits.h)
-        love.graphics.rectangle('line', self.limits.x, self.limits.y, self.limits.w, self.limits.h)
-
-        love.graphics.line(
-            self.limits.x,
-            self.limits.y + self.limits.h / 2,
-            self.limits.w + self.limits.x,
-            self.limits.y + self.limits.h / 2
-        )
-        love.graphics.line(
-            self.limits.x + self.limits.w / 2,
-            self.limits.y,
-            self.limits.x + self.limits.w / 2,
-            self.limits.y + self.limits.h
-        )
     end
 
     love.graphics.setFont(self.font)
     for i, v in pairs(self.menus[self.current_menu].items) do
         if i == self.cursor_pos then
-            love.graphics.setColor(color_utils.toRGB(252, 207, 3))
+            love.graphics.setColor(C.bg_color())
         end
 
         local menu = self.menus[self.current_menu].items
 
         local label = menu[i].label
-        local value = self:get_value(menu[i].value)
-        local lx, ly = self:centerText(label, menu[i].align_label, self.menus[self.current_menu].align_y)
-        local vx, vy = self:centerText(value, menu[i].align_value, self.menus[self.current_menu].align_y)
-
+        local value = self:get_item_value(menu[i].value)
+        local lx, ly = self:center_text(label, menu[i].align_label, self.menus[self.current_menu].align_y)
+        local vx, vy = self:center_text(value, menu[i].align_value, self.menus[self.current_menu].align_y)
 
         love.graphics.print(label, lx,
             ly + (self.option.item_gap * (i - 1)))
 
         love.graphics.print(value, vx,
             vy + (self.option.item_gap * (i - 1)))
-
 
         love.graphics.setColor(1, 1, 1)
     end
@@ -209,40 +221,24 @@ function MenuManager:draw_menu(menu, draw_bg)
     self.current_menu_size = #menu.items
     if self.limits ~= nil then
         self:draw_window(self.limits.x, self.limits.y, self.limits.w, self.limits.h)
-        love.graphics.rectangle('line', self.limits.x, self.limits.y, self.limits.w, self.limits.h)
-
-        love.graphics.line(
-            self.limits.x,
-            self.limits.y + self.limits.h / 2,
-            self.limits.w + self.limits.x,
-            self.limits.y + self.limits.h / 2
-        )
-        love.graphics.line(
-            self.limits.x + self.limits.w / 2,
-            self.limits.y,
-            self.limits.x + self.limits.w / 2,
-            self.limits.y + self.limits.h
-        )
     end
 
     love.graphics.setFont(self.font)
     for i, v in pairs(menu.items) do
         if i == self.cursor_pos then
-            love.graphics.setColor(color_utils.toRGB(252, 207, 3))
+            love.graphics.setColor(C.bg_color())
         end
 
         local label = menu.items[i].label
         local value = self:get_value(menu.items[i].value)
-        local lx, ly = self:centerText(label, menu.items[i].align_label, menu.align_y)
-        local vx, vy = self:centerText(value, menu.items[i].align_value, menu.align_y)
-
+        local lx, ly = self:center_text(label, menu.items[i].align_label, menu.align_y)
+        local vx, vy = self:center_text(value, menu.items[i].align_value, menu.align_y)
 
         love.graphics.print(label, lx,
             ly + (self.option.item_gap * (i - 1)))
 
         love.graphics.print(value, vx,
             vy + (self.option.item_gap * (i - 1)))
-
 
         love.graphics.setColor(1, 1, 1)
     end
@@ -292,7 +288,7 @@ function MenuManager:mod(type)
     end
 end
 
-function MenuManager:setValue(value)
+function MenuManager:set_value(value)
     if self.in_menory_menu ~= nil then
         local _value = self.in_menory_menu.items[self.cursor_pos].value
         if value then
@@ -307,6 +303,14 @@ function MenuManager:setValue(value)
         else
             self.menus[self.current_menu].items[self.cursor_pos].value = not _value
         end
+    end
+end
+
+function MenuManager:get_value()
+    if self.in_menory_menu ~= nil then
+        return self.in_menory_menu.items[self.cursor_pos].value
+    else
+        return self.menus[self.current_menu].items[self.cursor_pos].value
     end
 end
 

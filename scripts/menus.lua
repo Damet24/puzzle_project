@@ -1,19 +1,23 @@
 return {
     main_menu = {
+        align_y = 'center',
         items = {
             {
                 label = 'play',
+                align_label = 'center',
                 action = function(mm)
                 end
             },
             {
                 label = 'snttings',
+                align_label = 'center',
                 action = function(mm)
                     mm:go_to_menu('setting_menu')
                 end
             },
             {
                 label = 'exit',
+                align_label = 'center',
                 action = function()
                     love.event.quit()
                 end
@@ -21,35 +25,39 @@ return {
         }
     },
     setting_menu = {
+        align_y = 'center',
         items = {
             {
                 label = 'display',
+                align_label = 'center',
                 action = function(mm)
                     mm:go_to_menu('display_menu')
                 end
             },
             {
                 label = 'audio',
+                align_label = 'center',
                 action = function(mm)
-                    local dw = love.graphics.getWidth()
-                    local dh = love.graphics.getHeight()
-
-                    local x = dw * (20 / 100)
-                    local y = dh * (20 / 100)
-                    local w = dw * (60 / 100)
-                    local h = dh * (60 / 100)
-                    mm:set_limits(x, y, w, h)
+                    local fun = function()
+                        local dw = love.graphics.getWidth()
+                        local dh = love.graphics.getHeight()
+                        return dw * (20 / 100), dh * (20 / 100), dw * (60 / 100), dh * (60 / 100)
+                    end
+                    mm:set_limits(fun())
+                    mm:set_computed_limits(fun)
                     mm:go_to_menu('audio_menu')
                 end
             },
             {
                 label = 'back',
+                align_label = 'center',
                 action = function(mm)
                     mm:back_on_menu()
                 end
             },
             {
                 label = 'exit',
+                align_label = 'center',
                 action = function()
                     love.event.quit()
                 end
@@ -57,24 +65,37 @@ return {
         }
     },
     display_menu = {
+        align_y = 'center',
         items =
         {
             {
                 label = 'fullscreen',
                 value = false,
+                align_label = 'center_right',
                 align_value = 'center_left',
                 action = function(mm)
-                    mm:setValue()
+                    mm:set_value()
+                end
+            },
+            {
+                label = 'monitor',
+                value = 1,
+                align_label = 'center_right',
+                align_value = 'center_left',
+                action = function(mm)
+                    -- mm:set_value()
                 end
             },
             {
                 label = 'back',
+                align_label = 'center',
                 action = function(mm)
                     mm:back_on_menu()
                 end
             },
             {
                 label = 'exit',
+                align_label = 'center',
                 action = function()
                     love.event.quit()
                 end
@@ -82,55 +103,58 @@ return {
         }
     },
     audio_menu = {
+        align_y = 'center',
         items =
         {
             {
                 label = 'master',
                 action = function(mm)
+                    if mm:get_value() >= 100 then
+                        mm:set_value(0)
+                    elseif mm:get_value() <= 0 then
+                        mm:set_value(100)
+                    end
                 end,
                 value = 100,
-                align_label = 'left',
-                align_value = 'center',
+                align_label = 'center_right',
+                align_value = 'center_left',
                 mod = function(mm, type)
                     if type == 'left' then
-                        mm:setValue(-1)
+                        mm:set_value(-2)
                     elseif type == 'right' then
-                        mm:setValue(1)
+                        mm:set_value(2)
                     end
                 end
             },
             {
                 label = 'music',
-                action = function(mm)
-                end,
                 value = 100,
-                align_label = 'left',
-                align_value = 'center',
+                align_label = 'center_right',
+                align_value = 'center_left',
                 mod = function(mm, type)
                     if type == 'left' then
-                        mm:setValue(-1)
+                        mm:set_value(-2)
                     elseif type == 'right' then
-                        mm:setValue(1)
+                        mm:set_value(2)
                     end
                 end
             },
             {
                 label = 'sfx',
-                action = function(mm)
-                end,
                 value = 100,
-                align_label = 'left',
-                align_value = 'center',
+                align_label = 'center_right',
+                align_value = 'center_left',
                 mod = function(mm, type)
                     if type == 'left' then
-                        mm:setValue(-1)
+                        mm:set_value(-2)
                     elseif type == 'right' then
-                        mm:setValue(1)
+                        mm:set_value(2)
                     end
                 end
             },
             {
                 label = 'back',
+                align_label = 'center',
                 action = function(mm)
                     mm:remove_limits()
                     mm:back_on_menu()
@@ -138,140 +162,9 @@ return {
             },
             {
                 label = 'exit',
+                align_label = 'center',
                 action = function()
                     love.event.quit()
-                end
-            }
-        }
-    },
-    inventory = {
-        x = 0,
-        y = 0,
-        items = {
-            {
-                label = 'apple',
-                value = 3,
-                align_value = 'right',
-                mod = function(mm, type)
-                    if type == 'left' then
-                        mm:setValue(-1)
-                    elseif type == 'right' then
-                        mm:setValue(1)
-                    end
-                end
-            },
-            {
-                label = 'normal shield',
-                value = 2,
-                align_value = 'right',
-                mod = function(mm, type)
-                    if type == 'left' then
-                        mm:setValue(-1)
-                    elseif type == 'right' then
-                        mm:setValue(1)
-                    end
-                end
-            },
-            {
-                label = 'normal shield',
-                value = 2,
-                align_value = 'right',
-                mod = function(mm, type)
-                    if type == 'left' then
-                        mm:setValue(-1)
-                    elseif type == 'right' then
-                        mm:setValue(1)
-                    end
-                end
-            }
-            ,
-            {
-                label = 'normal shield',
-                value = false,
-                align_value = 'right',
-                mod = function(mm)
-                    mm:setValue()
-                end
-            }
-            ,
-            {
-                label = 'normal shield',
-                value = true,
-                align_value = 'right',
-                mod = function(mm)
-                    mm:setValue()
-                end
-            },
-            {
-                label = 'normal shield',
-                value = 2,
-                align_value = 'right',
-                mod = function(mm, type)
-                    if type == 'left' then
-                        mm:setValue(-1)
-                    elseif type == 'right' then
-                        mm:setValue(1)
-                    end
-                end
-            },
-            {
-                label = 'normal shield',
-                value = 2,
-                align_value = 'right',
-                mod = function(mm, type)
-                    if type == 'left' then
-                        mm:setValue(-1)
-                    elseif type == 'right' then
-                        mm:setValue(1)
-                    end
-                end
-            },
-            {
-                label = 'normal shield',
-                value = 2,
-                align_value = 'right',
-                mod = function(mm, type)
-                    if type == 'left' then
-                        mm:setValue(-1)
-                    elseif type == 'right' then
-                        mm:setValue(1)
-                    end
-                end
-            },
-            {
-                label = 'normal shield',
-                value = 2,
-                align_value = 'right',
-                mod = function(mm, type)
-                    if type == 'left' then
-                        mm:setValue(-1)
-                    elseif type == 'right' then
-                        mm:setValue(1)
-                    end
-                end
-            },
-            {
-                label = 'normal shield',
-                value = 2,
-                align_value = 'right',
-                mod = function(mm, type)
-                    if type == 'left' then
-                        mm:setValue(-1)
-                    elseif type == 'right' then
-                        mm:setValue(1)
-                    end
-                end
-            },
-            {
-                label = 'normal shield',
-                value = 2,
-                align_value = 'right',
-                mod = function(mm, type)
-                    if type == 'left' then
-                        mm:setValue(-1)
-                    elseif type == 'right' then
-                        mm:setValue(1)
-                    end
                 end
             }
         }

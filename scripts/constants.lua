@@ -1,3 +1,5 @@
+local color_utils = require 'scripts.utils.color'
+
 return {
     physics = {
         static = 'static',
@@ -10,5 +12,6 @@ return {
     },
     camera = {
         zoom = 4
-    }
+    },
+    bg_color = function () return color_utils.toRGB(252, 207, 3) end
 }

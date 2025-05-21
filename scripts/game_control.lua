@@ -67,7 +67,7 @@ function GameControl:update(delta_time)
             self.fullscreen = true
         end
         love.window.setFullscreen(self.fullscreen)
-
+        self.menu_manager:update()
     end
     self.objects.player:update(delta_time)
 
@@ -84,21 +84,40 @@ function GameControl:update(delta_time)
     end
 
     if self.show_menu then
+        self.menu_manager:update()
         self:control_menu()
     end
 end
 
 function GameControl:control_menu()
-    
+    local delay, interval = 0, 0.2
+    if self.input.down('up', delay, interval) then
+        self.menu_manager:up()
+    end
+    if self.input.down('down', delay, interval) then
+        self.menu_manager:down()
+    end
+
+    if self.input.down('left', delay, interval) then
+        self.menu_manager:mod('left')
+    end
+
+    if self.input.down('right', delay, interval) then
+        self.menu_manager:mod('right')
+    end
+
+    if self.input.pressed('space') or self.input.pressed('return') then
+        self.menu_manager:action()
+    end
 end
 
 function GameControl:draw()
     self.camera:attach()
-    self.map_manager:draw()
+    -- self.map_manager:draw()
 
-    for i, obj in pairs(self.objects) do
-        obj:draw()
-    end
+    -- for i, obj in pairs(self.objects) do
+    --     obj:draw()
+    -- end
 
     if self.debug then
         if debug and self.world then
@@ -120,7 +139,7 @@ function GameControl:draw()
     end
     self.camera:detach()
     love.graphics.setBackgroundColor(color_utils.toRGB(37, 18, 26))
-    
+
     if self.show_menu then
         self.menu_manager:draw_current_menu()
     end
