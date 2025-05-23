@@ -5,7 +5,7 @@ local Player = require 'scripts.player'
 local input = require 'libs.input.input'
 local color_utils = require 'scripts.utils.color'
 local C = require 'scripts.constants'
-local MenuManager = require 'scripts.menu_manager'
+local MenuRenderer = require 'scripts.menu_renderer'
 
 local menus = require 'scripts.menus'
 
@@ -49,14 +49,15 @@ GameControl.new = function()
 
     instance.objects.player = Player.new(0, 0, instance.world)
 
-    instance.menu_manager = MenuManager.new(menus, 'main_menu')
-    instance.show_menu = false
+    instance.menu_renderer = MenuRenderer.new(menus, 'main_menu')
+    instance.show_menu = true
 
     return instance
 end
 
 function GameControl:load()
     self.input.bind_callbacks()
+    self.menu_renderer:add_menu_layer(menus.test)
 end
 
 function GameControl:update(delta_time)
@@ -67,7 +68,7 @@ function GameControl:update(delta_time)
             self.fullscreen = true
         end
         love.window.setFullscreen(self.fullscreen)
-        self.menu_manager:update()
+        -- self.menu_manager:update()
     end
     self.objects.player:update(delta_time)
 
@@ -79,45 +80,54 @@ function GameControl:update(delta_time)
         end
     end
 
+    if self.input.pressed('a') then
+         self.menu_renderer:add_menu_layer(menus.test)
+    end
+
+    if self.input.pressed('r') then
+          self.menu_renderer:add_menu_layer(menus.audio_menu)
+    end
+    if self.input.pressed('s') then
+          self.menu_renderer:remove_last_layers()
+    end
+
     if self.input.pressed('escape') then
         self.show_menu = not self.show_menu
     end
 
     if self.show_menu then
-        self.menu_manager:update()
+        -- self.menu_manager:update()
         self:control_menu()
     end
+
 end
 
 function GameControl:control_menu()
     local delay, interval = 0, 0.2
     if self.input.down('up', delay, interval) then
-        self.menu_manager:up()
+        self.menu_renderer:up()
     end
     if self.input.down('down', delay, interval) then
-        self.menu_manager:down()
+        self.menu_renderer:down()
     end
 
-    if self.input.down('left', delay, interval) then
-        self.menu_manager:mod('left')
-    end
+    -- if self.input.down('left', delay, interval) then
+    --     self.menu_manager:mod('left')
+    -- end
 
-    if self.input.down('right', delay, interval) then
-        self.menu_manager:mod('right')
-    end
+    -- if self.input.down('right', delay, interval) then
+    --     self.menu_manager:mod('right')
+    -- end
 
-    if self.input.pressed('space') or self.input.pressed('return') then
-        self.menu_manager:action()
-    end
+    -- if self.input.pressed('space') or self.input.pressed('return') then
+    --     self.menu_manager:action()
+    -- end
 end
 
 function GameControl:draw()
     self.camera:attach()
-    -- self.map_manager:draw()
 
-    -- for i, obj in pairs(self.objects) do
-    --     obj:draw()
-    -- end
+
 
     if self.debug then
         if debug and self.world then
@@ -141,7 +151,7 @@ function GameControl:draw()
     love.graphics.setBackgroundColor(color_utils.toRGB(37, 18, 26))
 
     if self.show_menu then
-        self.menu_manager:draw_current_menu()
+        self.menu_renderer:draw()
     end
 end
 
