@@ -260,7 +260,7 @@ function MenuRenderer:draw_menu_elemets(menu, layer)
     end
 end
 
-function MenuRenderer:get_item_value(value)
+function MenuRenderer:get_item_value(value) 
     local _value = ''
     if value ~= nil then
         if value and type(value) ~= 'boolean' then
