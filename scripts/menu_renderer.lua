@@ -67,8 +67,11 @@ function MenuRenderer:draw_layers()
         if menu.draw_bg then
             self:draw_background()
         end
+        
         self:draw_window(self:get_menu_window_size(menu))
+        love.graphics.setScissor(self:get_menu_window_size(menu))
         self:draw_menu_elemets(menu, i)
+        love.graphics.setScissor()
     end
 end
 
@@ -257,6 +260,11 @@ function MenuRenderer:draw_menu_elemets_vertical(menu, layer)
 
         love.graphics.setColor(1, 1, 1)
         draw_y_position = draw_y_position + 1
+    end
+
+    if menu.options ~= nil then
+        local limit_y = title_bottom_position + (draw_y_position * self.option.item_gap)
+        love.graphics.print(menu.options[1].label, limits.x+ self.option.item_margin, limits.y + limits.h -  self.font:getHeight())
     end
 end
 
