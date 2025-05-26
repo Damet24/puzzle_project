@@ -13,12 +13,12 @@ return {
     camera = {
         zoom = 4
     },
-    bg_color = function () return color_utils.toRGB(252, 207, 3) end,
+    bg_color = function () return color_utils.toRGB(37, 18, 26) end,
     colors = {
         red = function () return color_utils.toRGB(255, 0, 0) end
     },
     menu = {
-        type = {
+        direction = {
             horizontal = 'horizontal',
             vertical = 'horizontal'
         }

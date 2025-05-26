@@ -26,7 +26,7 @@ end
 
 function MenuRenderer:add_menu_layer(menu)
     menu.cursor_pos = 1
-    menu.scroll_offset  = 0
+    menu.scroll_offset = 0
     self.cursor_pos = 1
     self.current_menu_size = #menu.items
     self.layers[#self.layers + 1] = menu
@@ -200,7 +200,7 @@ function MenuRenderer:get_text_position(menu, layer, limits, limits_y, item_alig
     end
 end
 
-function MenuRenderer:get_max_visible_items(menu)
+function MenuRenderer:get_max_visible_vertical_items(menu)
     local limits = self:get_menu_limits(menu)
     local total_space = limits.h
 
@@ -218,7 +218,7 @@ function MenuRenderer:get_max_visible_items(menu)
     return math.floor(total_space / item_space)
 end
 
-function MenuRenderer:draw_menu_elemets(menu, layer)
+function MenuRenderer:draw_menu_elemets_vertical(menu, layer)
     love.graphics.setFont(self.font)
 
     local limits = self:get_menu_limits(menu)
@@ -235,7 +235,7 @@ function MenuRenderer:draw_menu_elemets(menu, layer)
         title_bottom_position = limits.y + self.option.title_margin_bottom
     end
 
-    local max_visible = self:get_max_visible_items(menu)
+    local max_visible = self:get_max_visible_vertical_items(menu)
     local start_index = menu.scroll_offset + 1
     local end_index = math.min(start_index + max_visible - 1, #menu.items)
 
@@ -260,7 +260,47 @@ function MenuRenderer:draw_menu_elemets(menu, layer)
     end
 end
 
-function MenuRenderer:get_item_value(value) 
+function MenuRenderer:draw_menu_elemets_horizontal(menu, layer)
+    love.graphics.setFont(self.font)
+
+    local limits = self:get_menu_limits(menu)
+    local draw_y_position = 0
+
+    local menu_title = self:get_menu_title(menu)
+    local title_bottom_position = 0
+
+    if #menu_title > 0 then
+        local x, y = self:get_title_position(menu, layer)
+        title_bottom_position = y
+        love.graphics.print(menu_title, x, y)
+        draw_y_position = draw_y_position + self.option.title_margin_bottom
+    else
+        title_bottom_position = limits.y + self.option.title_margin_bottom
+    end
+
+    local limit_y = title_bottom_position + (draw_y_position * self.option.item_gap)
+    local last_positiion = limits.x + self.option.item_gap
+    for index, value in ipairs(menu.items) do
+        if index == menu.cursor_pos and layer == #self.layers then
+            love.graphics.setColor(C.colors.red())
+        end
+
+        local word_width = self.font:getWidth(value.label)
+        love.graphics.print(value.label, last_positiion, limit_y)
+        love.graphics.setColor(1, 1, 1)
+        last_positiion = last_positiion + word_width + self.option.item_gap
+    end
+end
+
+function MenuRenderer:draw_menu_elemets(menu, layer)
+    if menu.direction ~= nil and menu.direction == C.menu.direction.horizontal then
+        self:draw_menu_elemets_horizontal(menu, layer)
+    else
+        self:draw_menu_elemets_vertical(menu, layer)
+    end
+end
+
+function MenuRenderer:get_item_value(value)
     local _value = ''
     if value ~= nil then
         if value and type(value) ~= 'boolean' then
@@ -301,7 +341,7 @@ end
 function MenuRenderer:up()
     if #self.layers > 0 then
         local menu = self.layers[#self.layers]
-        local max_visible = self:get_max_visible_items(menu)
+        local max_visible = self:get_max_visible_vertical_items(menu)
 
         if menu.cursor_pos == 1 then
             menu.cursor_pos = #menu.items
@@ -318,7 +358,7 @@ end
 function MenuRenderer:down()
     if #self.layers > 0 then
         local menu = self.layers[#self.layers]
-        local max_visible = self:get_max_visible_items(menu)
+        local max_visible = self:get_max_visible_vertical_items(menu)
 
         if menu.cursor_pos == #menu.items then
             menu.cursor_pos = 1
@@ -330,6 +370,11 @@ function MenuRenderer:down()
             end
         end
     end
+end
+
+function MenuRenderer:action()
+    local menu = self.layers[#self.layers]
+    return menu.items[menu.cursor_pos].action
 end
 
 return MenuRenderer

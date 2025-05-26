@@ -45,7 +45,7 @@ return {
         -- align_y = 'right',
         draw_bg = true,
         draw_window = true,
-        type = C.menu.type.horizontal,
+        type = C.menu.direction.horizontal,
         dynamic_size = function()
             local dw = love.graphics.getWidth()
             local dh = love.graphics.getHeight()

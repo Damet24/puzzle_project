@@ -7,6 +7,7 @@ local color_utils = require 'scripts.utils.color'
 local C = require 'scripts.constants'
 local MenuRenderer = require 'scripts.menu_renderer'
 
+
 local menus = require 'scripts.menus'
 
 local GameControl = {}
@@ -23,6 +24,7 @@ local function config_camera(camera)
     local zoom = math.floor(math.min(actualWidth / baseWidth, actualHeight / baseHeight))
     camera:zoom(zoom)
 end
+
 
 GameControl.new = function()
     local instance = setmetatable({}, GameControl)
@@ -47,17 +49,21 @@ GameControl.new = function()
 
     CollisionGameObject.new(instance.world, 'static', 32, 32, 16, 16)
 
-    instance.objects.player = Player.new(0, 0, instance.world)
+    instance.menu_renderer = MenuRenderer.new()
+    instance.show_menu = false
 
-    instance.menu_renderer = MenuRenderer.new(menus, 'main_menu')
-    instance.show_menu = true
+    instance.objects = {
+
+    }
+
+    -- instance.player = Player.new(0, 0, instance.world)
 
     return instance
 end
 
 function GameControl:load()
     self.input.bind_callbacks()
-    self.menu_renderer:add_menu_layer(menus.test)
+    self.menu_renderer:add_menu_layer(menus.main_menu)
 end
 
 function GameControl:update(delta_time)
@@ -70,7 +76,8 @@ function GameControl:update(delta_time)
         love.window.setFullscreen(self.fullscreen)
         -- self.menu_manager:update()
     end
-    self.objects.player:update(delta_time)
+
+    -- self.player:update(delta_time)
 
     if self.input.pressed('d') then
         if self.debug then
@@ -81,14 +88,14 @@ function GameControl:update(delta_time)
     end
 
     if self.input.pressed('a') then
-         self.menu_renderer:add_menu_layer(menus.test)
+        self.menu_renderer:add_menu_layer(menus.test)
     end
 
     if self.input.pressed('r') then
-          self.menu_renderer:add_menu_layer(menus.audio_menu)
+        self.menu_renderer:add_menu_layer(menus.audio_menu)
     end
     if self.input.pressed('s') then
-          self.menu_renderer:remove_last_layers()
+        self.menu_renderer:remove_last_layers()
     end
 
     if self.input.pressed('escape') then
@@ -99,7 +106,6 @@ function GameControl:update(delta_time)
         -- self.menu_manager:update()
         self:control_menu()
     end
-
 end
 
 function GameControl:control_menu()
@@ -124,10 +130,20 @@ function GameControl:control_menu()
     -- end
 end
 
+function GameControl:add_object(obj, layer)
+    layer = layer or 1
+
+    local value = {
+        layer = layer,
+        object = obj
+    }
+    table.insert(self.objects, #self.objects, value)
+end
+
 function GameControl:draw()
     self.camera:attach()
 
-
+    -- self.player:draw()
 
     if self.debug then
         if debug and self.world then
